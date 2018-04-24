@@ -1,6 +1,6 @@
 <template>
   <page>
-    <page-header class="page-head-wrap" title="我的联保关系" :showBack="true" @on-click-back="toBack" slot="header"></page-header>
+    <page-header class="page-head-wrap" title="我的联保关系" :showBack="true" @on-click-back="toBack" slot="header" :left-options="{backText: ''}"></page-header>
     <page-content class="page-content">
       <div class="wrapper-account" v-show="!isEmpty">
         <group class="account-group">
@@ -57,9 +57,19 @@
     },
     methods: {
       getGuarantor () {
-        let params = {
-          "fdLoginName": kk.app.getUserInfo().loginName
-        };
+        let params ={};
+        if(kk.isKK()){
+        	params= {
+	          "fdLoginName": kk.app.getUserInfo().loginName,
+	          "fdNo": kk.app.getUserInfo().loginName,
+	        };
+        }else{
+        	params= {
+	          "fdLoginName": "80080218",
+	          "fdNo":"80080218"
+	        };
+        }
+        
         const apiURL = '/kkYhUnproforMain.do?method=getGuarantor';
         this.$http.post(apiURL, params).then((response) => {
           var sourceData = response.body.data,

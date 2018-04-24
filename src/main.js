@@ -27,25 +27,20 @@ Vue.http.options.emulateJSON = true
 kk.config('detailLog', true)
 // // 辉信上使用
 Vue.http.interceptors.push(kk.proxy.vueInterceptor)
+alert(JSON.stringify(kk.proxy.vueInterceptor))
+alert(JSON.stringify(Vue.http.interceptors))
 
 // 对所有ajax请求进行统一设置
 Vue.http.interceptors.push((request, next) => {
-  request.url = '/oaapp/yh/evaluate/yh_evaluate_main' + request.url
-  // request.header.set('Cookie', 'Ltpat')
-  // const queryData = Solo.utils.getQueryData(request.url.split('?')[1])
-  // let url = 'mock/'
-  // if (queryData.method === 'getEvaluationInfo') {
-  //   url += queryData.type === 'wating' ? 'list.json' : 'allList.json'
-  // }
-  // if (queryData.method === 'getGuarantor') {
-  //   url += 'account.json';
-  // }
-  // url = 'http://10.67.29.162:3001/' + url
-  // request.url = url
-  console.log(request.url);
+	alert(JSON.stringify(request.url))
+//request.url = '/oaapp/yh/evaluate/yh_evaluate_main' + request.url
+  request.url = 'http://kk7dev.yonghui.cn:7080/oaapp/yh/evaluate/yh_evaluate_main' + request.url
+alert(request.url)
+//alert("请求！")
   next()
+//alert("请求完成")
 });
-
+//http://10.0.140.123:7080
 window.kk = kk
 
 // 启动应用
@@ -56,5 +51,5 @@ Solo.start({
   },
   // 默认页面
   enterPage: 'home',
-  kk: kk
+kk: kk
 })

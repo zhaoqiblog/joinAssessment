@@ -1,7 +1,7 @@
 <template>
   <page>
-    <page-header class="page-head-wrap" title="测评" :showBack="true" @on-click-back="toBack" slot="header">
-      <template slot="header-right">
+    <page-header class="page-head-wrap" title="测评" :showBack="true" @on-click-back="toBack" slot="header" :left-options="{backText: ''}">
+      <template slot="right">
         <a class="head-link" :class="{disable: submitSta}" @click="submitForm($event)" slot="right">提交</a>
       </template>
     </page-header>
@@ -99,8 +99,20 @@
               <span class="icon-info" v-show="questionObj['question6']">{{questionObj["question6"]}}分</span>
             </div>
           </card>
+          <card v-if="detailData.oneCluster==1">
+            <div class="card-head" slot="header">7.是否愿意继续为他/她担保</div>
+            <div class="card-foot" slot="footer">
+              <div class="icon-star-group icon-star-group-differ">
+              	<span v-for="n in 2"
+	                   @click="tabIsAlways(n, 7, $event)" :key="n">
+	                <i :class="!isStillguarantee?'icon-star active':'icon-star'" v-if="n==1"></i><span v-if="n==1">是</span> 
+	                <i :class="isStillguarantee?'icon-star active':'icon-star'" v-if="n==2"></i><span v-if="n=='2'">否</span>
+                </span>
+              </div>
+            </div>
+          </card>
           <card>
-            <div class="card-head card-line" slot="header">7.(选填)如果你还有其他想要告诉我们的...</div>
+            <div class="card-head card-line" slot="header">{{detailData.oneCluster==1?'8':'7'}}.(选填)如果你还有其他想要告诉我们的...</div>
             <div class="card-content-box" slot="content">
               <x-textarea :max="20" v-model="content" name="description" placeholder="请输入少于200字"></x-textarea>
             </div>
@@ -129,7 +141,6 @@
     },
     data () {
       return {
-        userName: this.pageData,
         isActive: false,
         isLink: true,
         showPositionValue: false,
@@ -141,14 +152,11 @@
           "question4": 0,
           "question5": 0,
           "question6": 0,
+          "question8": 1,
         },
         content: '',
-        detailData: {}
-      }
-    },
-    computed: {
-      userNum () {
-        return this.pageData;
+        detailData: {},
+        isStillguarantee:false,
       }
     },
     watch: {
@@ -156,21 +164,40 @@
         deep: true,
         handler: function (obj) {
           for(var n in obj){
-            if(obj[n] == 0)return false;
+          	if(this.detailData.oneCluster==1&&obj[n] == 0){
+          		return false;
+          	}else{
+          		if(obj[n] == 0)return false;
+          	}            
           }
           this.submitSta = false;
         }
       }
     },
+    created () {
+    	console.log(this.viewData)
+      this.getRecordDetail()
+    },
     methods: {
       getRecordDetail () {
-        let params = {
-          "evaluationId": this.pageData
-        };
-        const apiURL = '/kkYhUnproforMain.do?method=getEvaluationRecordDetail';
+      	let params;
+      	const apiURL = '/kkYhUnproforMain.do?method=getEvaluationRecordDetail';
+      	if(kk.isKK()){
+      		params = {
+	          "evaluationId": this.viewData,
+	          "fdNo":kk.app.getUserInfo().loginName,
+        	};
+      	}else{
+      		params = {
+	          "evaluationId": this.viewData,
+	          "fdNo":80080218,
+	        };
+      	}
         this.$http.post(apiURL, params).then((response) => {
           this.detailData = response.body.data;
-          if(response.body.data.fdQuestion1 && response.body.data.fdQuestion1 > 0) {
+          //oneCluster 1：第一集群，0：非一集群
+          const res = response.body.data
+          if(res.fdQuestion1 && res.fdQuestion1 > 0) {
             this.$vux.toast.show({
               text: '您已经对该人评过分',
               type: 'text',
@@ -196,18 +223,35 @@
             self.parentNode.childNodes[ind].className = "icon-star";
           }
         })
-        //console.log(this.questionObj);
+//        console.log(this.questionObj);
+      },
+      tabIsAlways(index,item, event){
+      	var self = event.target;
+      	if(index==1){
+      		this.isStillguarantee=false;
+      		this.questionObj.question8=1
+      	}else{
+      		this.isStillguarantee=true;
+      		this.questionObj.question8=0
+      	}
+      	
       },
       submitForm (event) {
+      	console.log("popoio")
         var apiUrl = '/kkYhUnproforMain.do?method=setEvaluationRecord',
             params,
             status;
         status = event.target.classList.contains('disable');
-        if(!status && this.pageData){
+        
+        if(!status && this.viewData){
           params = this.questionObj;
-          params.fdId = this.pageData;
+          params.fdId = this.viewData;
+          if(kk.isKK()){
+          	params.fdNo = kk.app.getUserInfo().loginName;
+          }else{
+          	params.fdNo = "80080218";
+          }
           params.question7 = this.content;
-          console.log(params);
           this.$http.post(apiUrl, params).then((response)=>{
            if(response.body.errorcode == 0){
               this.showPositionValue = true;
@@ -233,9 +277,7 @@
         this.$router.back();
       }
     },
-    created () {
-      this.getRecordDetail()
-    }
+    
   }
 
 </script>
@@ -264,6 +306,18 @@
   }
   .wrapper-chk{
     position: relative;
+    .wrap-head:after{
+    	content: " ";
+    	position: absolute;
+    	left: 0;
+    	bottom: 0;
+    	right: 0;
+    	height: 1px;
+    	border-bottom: 1px solid #D9D9D9;
+    	color: #D9D9D9;
+    	transform-origin: 0 100%;
+    	transform: scaleY(0.5);
+    }
     .wrap-head{
       width:100%;
       line-height:50px;
@@ -271,7 +325,7 @@
       position: fixed;
       z-index:5;
       background-color:#ffffff;
-      border-bottom: 1px solid #D9D9D9;
+      /*border-bottom: 1px solid #D9D9D9;*/
       box-sizing: border-box;
       div{
         -webkit-box-sizing: border-box;
@@ -371,8 +425,24 @@
       }
       .card-foot{
         padding:15px;
+        padding-top: 0;
         .icon-star-group{
           display: inline-block;
+        }
+        .icon-star-group-differ{
+        	display: flex;
+        	justify-content: flex-start;
+        	align-items: center;
+        	padding-top: 15px;
+        	>span{
+        		display: flex;
+        		justify-content: space-between;
+        		align-items: center;
+        		margin-right: 15px;
+        		
+        		.icon-star{margin-right: 5px;}
+        		span{line-height: 20px;}
+        	};
         }
         .icon-info{
           display: inline-block;
@@ -387,15 +457,15 @@
     }
   }
   .icon-star{
-    width:40px;
-    height:40px;
+    width:20px;
+    height:20px;
     display: inline-block;
     vertical-align: middle;
     margin-right:25px;
     background: transparent url("../assets/icon_star_off.png") center no-repeat;
     -webkit-background-size:20px 20px;
     background-size:20px 20px;
-    margin-right: 0;
+    margin-right: 15px;
     &.active{
        background-image: url("../assets/icon_star_on.png");
      }

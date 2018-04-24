@@ -1,11 +1,29 @@
 <template class="container">
   <page>
-    <page-header class="wrap-head" :title="pageTitle" :showBack="true" slot="header" @on-click-back="toBack">
-      <template slot="header-right">
+    <page-header class="wrap-head" :title="pageTitle" :showBack="true" slot="header" @on-click-back="toBack" :left-options="{backText: ''}">
+      <template slot="right">
         <a class="head-link" @click="gotoAccount" slot="right">联保关系</a>
       </template>
     </page-header>
-    <page-footer class="wrap-foot">
+    
+    <page-footer class="wrap-foot ">
+    	<div class="details-total-fixed">
+    		<tabbar class="tabbar-h">
+          <tabbar-item @on-item-click="togglePage('todo')" selected>
+            <img v-show="todoIcon" slot="icon" src="../assets/tab_assess_on.png">
+            <img v-show="!todoIcon" slot="icon" src="../assets/tab_assess_off.png">
+            <span slot="label">待测评<badge v-show="todoSum" :text="todoSum"></badge></span>
+          </tabbar-item>
+          <tabbar-item @on-item-click="togglePage('done')" >
+            <img v-show="doneIcon" slot="icon" src="../assets/tab_record_on.png">
+            <img v-show="!doneIcon" slot="icon" src="../assets/tab_record_off.png">
+            <span slot="label">测评记录</span>
+          </tabbar-item>
+        </tabbar>
+    		
+    	</div>
+    	
+    	
       <template slot="footer-content">
         <tabbar class="tabbar-h">
           <tabbar-item @on-item-click="togglePage('todo')" selected>
@@ -56,9 +74,6 @@
       </div>
       <div class="wrapper-empty" v-show="isEmpty">
         <div class="wrapper-empty-cell">
-        	<div id="appss">
-        		测试测评
-        	</div>
           <img src="../assets/pic_default@2x.png" alt="">
           <div class="wrapper-empty-info">您还没有{{type=="todo" ? "待测评":"测评记录" }}的信息呢</div>
         </div>
@@ -145,8 +160,10 @@
       }
     },
     created () {
+    	alert(JSON.stringify(kk.app.getUserInfo()))
+//  console.log(kk.isKK())
       this.getPic();
-      this.reload();
+//    this.reload();
       //console.log(kk.app.getUserInfo());
 //      setTimeout(() => {
 //        this.showDialogStyle = true;
@@ -154,10 +171,23 @@
     },
     methods: {
       getPic () {
+      	let e="";
+      	let obj={}
+      	if(kk.isKK()){
+      		obj.fdNo=kk.app.getUserInfo().loginName
+      		e=kk.app.getUserInfo().loginName
+      	}else{
+      		obj.fdNo=80080218;
+      		e="80080218"
+      	}
         if(cookie.get('imgHasShowed') && (cookie.get('imgHasShowed') === kk.app.getUserInfo().loginName)) {
           this.showDialogStyle = false;
         }else {
-          this.$http.post('/kkYhUnproforMain.do?method=getPicUrl').then((response) => {
+        	alert("请求图片")
+          this.$http.post('/kkYhUnproforMain.do?method=getPicUrl',obj).then((response) => {
+          	console.log(response)
+          	alert("ppppp")
+          	alert(response.body.data)
             if(response.body.data) {
               this.popupImg = response.body.data
               this.showDialogStyle = true;
@@ -171,6 +201,10 @@
                 expires: new Date([d.getFullYear(), month, day].join('-'))
               })
             }
+          }).catch((err)=>{
+          	alert("错误")
+          	alert(JSON.stringify(err))
+          	console.log(err)
           })
         }
       },
@@ -186,16 +220,27 @@
         })*/
       },
       reload () {
-      	console.log(kk.app)
-        var params = {
-          "fdLoginName": kk.app.getUserInfo().loginName,
-          "type": this.type == 'todo' ? 'wating' : 'had'
-        };
+        let params={}
+        if(kk.isKK()){
+        	params = {
+	          "fdLoginName": kk.app.getUserInfo().loginName,
+	          "type": this.type == 'todo' ? 'wating' : 'had',
+	          "fdNo":kk.app.getUserInfo().loginName,
+	        };
+        }else{
+        	params = {
+	          "fdLoginName": 80080218,
+	          "fdNo":80080218,
+	          "type": this.type == 'todo' ? 'wating' : 'had'
+	        };
+        }
         var apiURL = '/kkYhUnproforMain.do?method=getEvaluationInfo';
+        
         this.$http.post(apiURL, params).then((response) => {
+        	console.log("lll")
           if(response.body.data.length){
             this[this.type + 'Lists'] = this.getGroupFrom(response.body.data);
-            console.log(this.doneLists)
+//          console.log(this.doneLists)
             this.isEmpty = false;
           }else{
             this.isEmpty = true;
@@ -212,10 +257,6 @@
           list.push(item)
         })
         return lists;
-//        return Object.keys(lists).reduce((acc, key) => {
-//          acc.push(lists[key])
-//          return acc
-//        }, [])
       },
       gotoTestPage (sta, item) {
         if(sta == 0){
@@ -289,6 +330,42 @@
 
 <style lang="less">
   @import '~vux/src/styles/reset.less';
+  .solo-toolbar{
+	  .solo-toolbar-right{
+	  	.head-link{
+	  		color:#fff;
+	  	}
+	  }
+  }
+  .solo-toolbar .solo-toolbar-title, .solo-toolbar h1{font-size: 16px;}
+  .wrap-head{color: #FFFFFF;}
+  .solo-toolbar .solo-toolbar-title, .solo-toolbar h1{color: #FFFFFF;}
+  .solo-toolbar .solo-toolbar-left .left-arrow:before{    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 1px solid #FFFFFF;
+    border-width: 1px 0 0 1px;
+    -webkit-transform: rotate(315deg);
+    transform: rotate(315deg);
+    top: 8px;
+    left: 7px;}
+    
+  .details-total-fixed{
+  	background: #FFFFFF;
+        /*height: 45px;
+        text-align: center;
+        line-height: 45px;
+        z-index: 1;
+        background: #ffffff;
+        font-size: 13px;
+        font-weight: 500;
+        box-shadow: 0px -8px 16px 0px rgba(229, 229, 229, 0.4);
+        .cltitle{
+            font-weight: 700;
+        }
+        .common-fix{display: flex;align-items: center;justify-content: center;width: 50%;}*/
+    }
   .container{
 
   }
@@ -325,6 +402,7 @@
       line-height: 50px;
     }
     .cell-group-box{
+    	margin-top: 10px;
       position: relative;
       background-color: #FFFFFF;
       &:before{
@@ -402,14 +480,15 @@
     }
     .multi-head{
       text-align: center;
-      line-height: 40px;
+      /*line-height: 40px;*/
+     margin-top: 10px;
       color: #979797;
     }
     .multi-head .weui-icon-info{
       font-size:18px;
     }
     .multi-group + .multi-group{
-      margin-top:15px;
+      margin-top:10px;
     }
   }
   .wrap-foot{
@@ -438,7 +517,8 @@
   }
   .tabbar-h{
     padding:10px;
-    background-color: #FFFFFF;
+    background-color: #FFFFFF !important;
+    box-shadow: 0 -3px 8px 0 rgba(12, 12, 12, 0.08);
   }
   .tabbar-h .weui-tabbar__icon,
   .tabbar-h .weui-tabbar__label{

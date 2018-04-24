@@ -1,6 +1,6 @@
 <template>
   <page>
-    <page-header class="page-head-wrap" title="测评详情" :showBack="true" @on-click-back="toBack" slot="header"></page-header>
+    <page-header class="page-head-wrap" title="测评详情" :showBack="true" @on-click-back="toBack" slot="header" :left-options="{backText: ''}"></page-header>
     <page-content>
       <div class="wrapper-detail" v-show="!isEmpty">
         <div class="wrap-head">
@@ -64,6 +64,13 @@
               <div class="cell-detail-right"></div>
             </li>
             <li>
+              <div class="cell-detail-left">是否愿意继续为他/她担保
+                <span class="cell-detail-num">({{detailData.fdQuestion8 ? "是":"否"}})</span>
+              </div>
+              <div class="cell-detail-right"></div>
+            </li>
+
+            <li>
               <div class="cell-detail-left">如果你还有其他想要告诉我们的...</div>
               <div class="cell-detail-right">{{detailData.fdQuestion7 ? detailData.fdQuestion7:'无'}}</div>
             </li>
@@ -106,7 +113,7 @@
     },
     computed: {
       userNum () {
-        return this.pageData ? this.pageData : '';
+        return this.viewData ? this.viewData : '';
       }
     },
     created () {
@@ -115,9 +122,19 @@
     methods: {
       getRecordDetail () {
         console.log(this.userNum);
-        let params = {
-          "evaluationId": this.pageData
-        };
+        let params={};
+        if(kk.isKK()){
+        	params= {
+	          "evaluationId": this.viewData,
+	          "fdNo":kk.app.getUserInfo().loginName,
+	        };
+        }else{
+        	params= {
+	          "evaluationId": this.viewData,
+	          "fdNo" : "80080218",
+	        };
+        }
+        
         const apiURL = '/kkYhUnproforMain.do?method=getEvaluationRecordDetail';
         this.$http.post(apiURL, params).then((response) => {
           if(response.body.data){
@@ -163,7 +180,20 @@
 
 <style lang="less">
   @import '~vux/src/styles/reset.less';
-
+.wrap-head:after{
+    	content: " ";
+	    position: absolute;
+	    left: 0;
+	    bottom: 0;
+	    right: 0;
+	    height: 1px;
+	    border-bottom: 1px solid #D9D9D9;
+	    color: #D9D9D9;
+	    -webkit-transform-origin: 0 100%;
+	    transform-origin: 0 100%;
+	    -webkit-transform: scaleY(0.5);
+	    transform: scaleY(0.5);
+    }
   .page-head-wrap{
     background-color: #25a7e8;
     color: #FFFFFF;
@@ -176,7 +206,9 @@
   }
   .wrapper-detail{
     position: relative;
+    
     .wrap-head{
+    	position: relative;
       font-size: 15px;
       width:100%;
       height:50px;
@@ -185,7 +217,7 @@
       position: fixed;
       z-index:5;
       background-color:#ffffff;
-      border-bottom: 1px solid #D9D9D9;
+      /*border-bottom: 1px solid #D9D9D9;*/
     div{
       -webkit-box-sizing: border-box;
       -moz-box-sizing: border-box;
@@ -213,11 +245,12 @@
     }
     .wrap-content{
       padding-top:50px;
+      margin-bottom: 10px;
       .vux-label {
         font-weight: bold;
       }
       .weui-cells {
-        margin-top: .5em;
+        margin-top: 10px;
       }
       .wrap-content-title{
         padding:0 15px;
@@ -282,6 +315,9 @@
       }
     }
     .wrap-detail{
+    	.weui-cells{
+    		margin-top: 10px;
+    	}
       .wrap-detail-title{
         padding:0 15px;
         line-height: 50px;
